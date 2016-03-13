@@ -1,3 +1,4 @@
 ## Requirements
 	requests  
-	BeautifulSoup
+	BeautifulSoup4
+	lxml

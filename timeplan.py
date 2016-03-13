@@ -15,7 +15,7 @@ ROOMS_RE = re.compile('(.\d \d{3})')
 NON_DIGITS_RE = re.compile('[\D]+')
 SUB_CODE_RE = re.compile('([A-Z]+.\d{3})')
 
-SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), Rooms VARCHAR(64));"
+SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), Campus VARCHAR(20), Rooms VARCHAR(64));"
 
 # These are parameters that will be fetched from the page.
 auto_params = ["__EVENTTARGET", "__EVENTARGUMENT", "__LASTFOCUS", "__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION", "tLinkType",
@@ -170,6 +170,7 @@ def get_row_info(row, week_no, csv):
 	course_code = ""
 	course_type = ""
 	info = ""
+	campus = ""
 	rooms = ""
 
 	for i in range(len(row)):
@@ -193,48 +194,56 @@ def get_row_info(row, week_no, csv):
 
 			# Extract info like subject code, type of class
 			elif i == 3:
-				# A class has at least two fields: The course code and the type. After this there can be some info.
+				# Find course codes. If it can't be found, all the info will be in the info column.
 				course_codes = re.findall(SUB_CODE_RE, val)
 				if len(course_codes) > 0:
-					course_code = course_codes[0]
+					course_code = "/".join(course_codes)
 				else: 
-					course_code = "None"
-
-				val = val[7:]
-				if "/" in val:
-					val = val.split("/")
-				else:
-					val = [val]
-
-				type_check = val[0].lower()
-
+					course_code = "See info"
+					info = val
+				
+				# Check for types of lectures.
+				type_check = val.lower()
 				if "for" in type_check:
 					course_type = "Lecture"
 				elif "sem" in type_check:
 					course_type = "Seminar"
-				elif "øv" in type_check or "lab" in type_check:
+				elif "Øv" in type_check or "lab" in type_check:
 					course_type = "Practice"
 				else:
-					course_type = "None"
+					course_type = "See info"
+					info = val
 
-				# Info can have some irrelevant numbers, so filter those out
-				if len(val) > 1:
-					info = [_ for _ in val[2:] if re.findall(NON_DIGITS_RE, _)]
-					info = "".join(info)
+				# Add extra info to the column, unless we already set i
+				if len(info) == 0:
+					info = val.split("/")[-1]
 				else:
 					info = ""
 
 
 			# Find and extract rooms
 			elif i == 4:
+				# Check for campus
+				campus_check = val.lower()
+				if "grm" in campus_check:
+					campus = "Grimstad"
+				elif "krs" in campus_check:
+					campus = "Kristiansand"
+				else:
+					campus = "Unknown"
+				
+				# If we can't find the rooms, just set whatever is in the column
 				listed_rooms = re.findall(ROOMS_RE, val)
-				rooms = "/".join(listed_rooms)
+				if len(listed_rooms) > 0:
+					rooms = "/".join(listed_rooms)
+				else:
+					rooms = val
 
 			# No need to add names of lecturers etc
 			elif i == 5:
 				continue
 
-	vals = (week_no, week_day, date, start_time, end_time, course_code, course_type, info, rooms)
+	vals = (week_no, week_day, date, start_time, end_time, course_code, course_type, info, campus, rooms)
 	if csv: vals = ";".join(vals) + ";\n"
 	return vals
 
@@ -248,7 +257,7 @@ def add_to_db(timetable, code):
 			cur = db_con.cursor()
 			cur.execute("DROP TABLE IF EXISTS " + table)
 			cur.execute("CREATE TABLE " + table + SQL_TABLE)
-			cur.executemany("INSERT INTO " + table + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", timetable)
+			cur.executemany("INSERT INTO " + table + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", timetable)
 			print "Timetable inserted into database"
 
 	except sql.Error, e:
