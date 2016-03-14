@@ -15,6 +15,7 @@
 		  python27Packages.beautifulsoup4
 		  python27Packages.dateutil
 		  python27Packages.lxml
+		  python27Packages.flask
 	 ];
   }
 

@@ -15,7 +15,7 @@ ROOMS_RE = re.compile('(.\d \d{3})')
 NON_DIGITS_RE = re.compile('[\D]+')
 SUB_CODE_RE = re.compile('([A-Z]+.\d{3})')
 
-SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), Campus VARCHAR(20), Rooms VARCHAR(64));"
+ROWS_SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), Campus VARCHAR(20), Rooms VARCHAR(64));"
 
 # These are parameters that will be fetched from the page.
 auto_params = ["__EVENTTARGET", "__EVENTARGUMENT", "__LASTFOCUS", "__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION", "tLinkType",
@@ -256,7 +256,7 @@ def add_to_db(timetable, code):
 			table = "\"" + code + "\""
 			cur = db_con.cursor()
 			cur.execute("DROP TABLE IF EXISTS " + table)
-			cur.execute("CREATE TABLE " + table + SQL_TABLE)
+			cur.execute("CREATE TABLE " + table + ROWS_SQL_TABLE)
 			cur.executemany("INSERT INTO " + table + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", timetable)
 			print "Timetable inserted into database"
 
@@ -265,8 +265,8 @@ def add_to_db(timetable, code):
 
 
 # "t" means this week
-weeks = "t"
-# weeks = range(1,31)
+# weeks = "t"
+weeks = range(1,31)
 
 # Can be 1-3 (mon-wed), 4-6 (thu-sat) or 1-6 (mon-sat)
 days = "1-6"
@@ -278,10 +278,10 @@ period = "v"
 subject_code = "#SPLUSE0C745"
 
 # Experimental, gets all the data
-# get_all(days, weeks, period)
+get_all(days, weeks, period)
 
 # Example for getting the time table and printing it out as csv
-print get_timetable(days, weeks, subject_code, period, csv=True)
+# print get_timetable(days, weeks, subject_code, period, csv=True)
 
 # Example for getting the time table and adding it to the database
 # tab = get_timetable(days, weeks, subject_code, period)
