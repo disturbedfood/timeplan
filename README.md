@@ -10,11 +10,13 @@ A fetcher script and API for timetables at the University of Agder.
 
 ## API
 
-**Additional dependencies:**  
+**Additional dependencies:**
+
 	flask
 
 Not finished yet, but queries the database for timetable information.  
-Syntax:  
+Syntax:
+
 	/<subjectcode>/<week>  
 
 If week is anything other than a number it'll default to the current week.  
