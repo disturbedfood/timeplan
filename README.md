@@ -6,7 +6,7 @@ A fetcher script and API for timetables at the University of Agder.
 	requests  
 	BeautifulSoup4
 	dateutil
-	lxmli
+	lxml
 
 ## API
 

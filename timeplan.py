@@ -12,7 +12,7 @@ import sqlite3 as sql
 RADIO_TYPE = "XMLSpreadsheet;studentsetxmlurl;SWSCUST+StudentSet+XMLSpreadsheet"
 
 ROOMS_RE = re.compile('(.\d \d{3})')
-SUB_CODE_RE = re.compile('([A-Z]+[^ ]\d{3})')
+SUB_CODE_RE = re.compile('([A-Z]{2,3}[^\s]\d{3})')
 
 ROWS_SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), \
 		  EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), \
@@ -295,10 +295,10 @@ period = "v"
 #subject_code = "#SPLUSE0C745"
 subject_code = "#SPLUS1DC14A"
 # Gets all timetable data, adds to database
-# get_all(days, weeks, period)
+get_all(days, weeks, period)
 
 # Example for getting the time table and printing it out as csv
-print get_week(days, weeks, subject_code, period, csv=True)
+# print get_week(days, weeks, subject_code, period, csv=True)
 
 # Example for getting the time table and adding it to the database
 # tab = get_week(days, weeks, subject_code, period)

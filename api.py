@@ -24,6 +24,9 @@ def subjects_query(subject=None):
 	if subject: query += " WHERE Code = %s" % (clean_table_name(subject))
 	return query
 
+def json_error(err):
+	return {"error": err}
+
 # Runs a database query. (be careful)
 def fetch_from_db(query):
 	try:
@@ -37,7 +40,7 @@ def fetch_from_db(query):
 		return data
 
 	except sql.Error, e:
-		print "SQL error:", str(e)
+		return json_error("SQL error: " + str(e))
 
 @app.route('/<subject>/<week>')
 def index(subject="", week=1):
@@ -52,7 +55,11 @@ def index(subject="", week=1):
 		"subject_name": "Not implemented",
 		"last_updated": "Not implemented",
 		"indices": ["Week day", "Date", "Start time", "End time", "Course", "Type", "Info", "Campus", "Rooms"] }
+
 	data = fetch_from_db(timetable_query(unicode(subject), week))
+
+	if "error" in data: return jsonify(data)
+
 	return jsonify({"timeplan": data, "meta": meta }) 
 
 
