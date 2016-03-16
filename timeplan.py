@@ -92,7 +92,7 @@ def get_all(days, weeks, season):
 	params = {
 		'RadioType': RADIO_TYPE,
 		'lbDays': days,
-		'lbWeeks': ";".join(str(_) for _ in weeks),
+		'lbWeeks': weeks, 
 		'dlObject': ""
 	}
 
@@ -281,8 +281,9 @@ def add_to_db(timetable, code):
 
 # "t" means this week
 # for spring this can be either range(1,31), range(1,30) or a number (not guaranteed to work, returns error)
-# weeks = ";".join(str(_) for _ in range(1,31))
-weeks = "t"
+weeks = ";".join(str(_) for _ in range(1,31))
+print "-" + weeks + "-"
+# weeks = "t"
 #weeks = " 3"
 
 # Can be 1-3 (mon-wed), 4-6 (thu-sat) or 1-6 (mon-sat)

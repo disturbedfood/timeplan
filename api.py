@@ -6,6 +6,7 @@ import os
 
 ver = "1.0"
 
+data_index = ["week_day", "date", "start_time", "end_time", "course", "type", "info", "campus", "rooms"]
 app = Flask(__name__)
 
 # Filter out any disallowed special characters from table name (to avoid injection), wrap in quotation marks
@@ -53,14 +54,17 @@ def index(subject="", week=1):
 	meta = {"week": week,
 		"subject_code": subject,
 		"subject_name": "Not implemented",
-		"last_updated": "Not implemented",
-		"indices": ["Week day", "Date", "Start time", "End time", "Course", "Type", "Info", "Campus", "Rooms"] }
+		"last_updated": "Not implemented" }
 
 	data = fetch_from_db(timetable_query(unicode(subject), week))
-
 	if "error" in data: return jsonify(data)
 
-	return jsonify({"timeplan": data, "meta": meta }) 
+	data_formatted = []
+	for d in data:
+		data_formatted.append({data_index[i]: d[i] for i in range(9)})
+	
+
+	return jsonify({"timeplan": data_formatted, "meta": meta }) 
 
 
 if __name__== '__main__':
