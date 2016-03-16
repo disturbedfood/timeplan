@@ -17,30 +17,22 @@ A fetcher script and API for timetables at the University of Agder.
 Not finished yet, but queries the database for timetable information.  
 Syntax:
 
-	/<subjectcode>/<week>  
+	/timeplan/1.0/<subjectcode>/<week>  
 
-If week is anything other than a number it'll default to the current week. Getting data only works for the current time period (autumn or spring), due to when the timetables update on UiA's site. 
-Subject codes can be retrieved with the get\_subject\_codes function in timeplan.py (will add an api for this as well)
+If week is anything other than a number or omitted it will default to the current week. Getting data only works for the current time period (autumn or spring), due to when the timetables update on UiA's site.  
 
-The return JSON has two dictionaries: meta and timeplan. The meta contains the week number, course code, human readable course name, and when it was last updated.  
-timeplan contains a list of dicts, each dict has these indices per row of data (this is in ascending chronological order):
+To retrieve subject codes for use in the URL, use this syntax:
 
-	campus
-	course
-	date
-	start_time
-	end_time
-	info
-	type
-	week_day
-	rooms
-	
+	/timeplan/1.0/subjects/<search>
+
+If you don't enter a search, it will list all saved subjects and their codes.
+
+Data to expect: If you retrieved a time table, expect two dicts: "meta" and "timeplan".  
+If you searched for a subject, expect one dict called "subjects".  
 If an error occured, the return JSON will only have one dictionary: error, which will only contain an error string. Remember to check this when fetching.
 
 
 ## TODO
 
-- Better info gathering
-- API for subject codes
-- Make a Subjects table
-- Make a sample webpage for displaying timetables
+- Make a sample webpage for displaying timetables  
+- Unified function for updating all needed data (to run once a week)
