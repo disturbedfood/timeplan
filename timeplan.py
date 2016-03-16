@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import requests
 from bs4 import BeautifulSoup
 from time import sleep
@@ -80,7 +81,7 @@ def get_week(days, weeks, subject_code, season, csv=False):
 	r = s.post(url, data=params)
 	s.close()
 	
-	return convert_to_table_format(r.text.encode('utf-8'), csv)
+	return convert_to_table_format(r.text, csv)
 
 # Gets the timetable for all subjects, in whatever weeks specified.
 def get_all(days, weeks, season):
@@ -105,8 +106,8 @@ def get_all(days, weeks, season):
 	for k, v in subjects.iteritems():
 		params['dlObject'] = v
 		r = s.post(url, data=params)
-		data[v] = convert_to_table_format(r.text.encode('utf-8'), False)
-		print "Got data for", k.encode('utf-8'), str(len(data[v])), "rows of data"
+		data[v] = convert_to_table_format(r.text, False)
+		print "Got data for", k, str(len(data[v])), "rows of data"
 		if len(data[v]) > 0: print data[v][0]
 		print len(data)
 		add_to_db(data[v], v)
@@ -153,7 +154,7 @@ def convert_to_table_format(html, csv):
 			# tr1 means this is a table header
 			if "tr1" in row_type:
 				week_info = week_row.find('td', {"class": "td1"})
-				week_no = week_info.getText().encode('utf-8').split(",")[0][4:]
+				week_no = week_info.getText().split(",")[0][4:]
 				if csv: table += "\n"
 
 			# tr2 - this is actual content
@@ -181,7 +182,7 @@ def get_row_info(row, week_no, csv):
 	for i in range(len(row)):
 		if len(row[i].getText()) > 0:
 			# Get rid of any surrounding whitespace
-			val = row[i].getText().encode('utf-8').strip()
+			val = row[i].getText().strip()
 
 			# Convert weekdays
 			if i == 0:
@@ -223,7 +224,7 @@ def get_row_info(row, week_no, csv):
 						del type_check[i]
 						break
 
-					elif "Øv" in type_check[i].lower() or "lab" in type_check[i].lower():
+					elif "øv" in type_check[i].lower() or "lab" in type_check[i].lower():
 						course_type = "Practice"
 						del type_check[i]
 						break
@@ -307,5 +308,5 @@ get_all(days, weeks, period)
 
 # Example for printing subject codes
 # 	subject_codes = get_subject_codes("v")
-# for k, v in subject_codes.items(): print k.encode('utf-8') + ": " + v.encode('utf-8')
+# for k, v in subject_codes.items(): print k + ": " + v
 

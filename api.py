@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from flask import Flask, jsonify
 import sqlite3 as sql
 import datetime as dt
@@ -11,8 +12,8 @@ app = Flask(__name__)
 
 # Filter out any disallowed special characters from table name (to avoid injection), wrap in quotation marks
 def clean_table_name(tab):
-	ret = ''.join(_ for _ in tab if _.isalnum() or _ in ".,æøå# ".decode("utf-8"))
-	return unicode("\"" + ret + "\"")
+	ret = ''.join(_ for _ in tab if _.isalnum() or _ in ".,æøå# ")
+	return "\"" + ret + "\""
 
 # Build a query to fetch the actual timetable
 def timetable_query(subject_code, week):
@@ -56,7 +57,7 @@ def index(subject="", week=1):
 		"subject_name": "Not implemented",
 		"last_updated": "Not implemented" }
 
-	data = fetch_from_db(timetable_query(unicode(subject), week))
+	data = fetch_from_db(timetable_query(subject, week))
 	if "error" in data: return jsonify(data)
 
 	data_formatted = []
