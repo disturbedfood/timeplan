@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 import requests
 from bs4 import BeautifulSoup
-from time import sleep
+from time import sleep, mktime
+import datetime as dt
 from urllib2 import urlopen
 from collections import OrderedDict
 import re
@@ -17,7 +18,9 @@ SUB_CODE_RE = re.compile('([A-Z]{2,3}[^\s]\d{3})')
 
 ROWS_SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), \
 		  EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), \
-		  Campus VARCHAR(20), Rooms VARCHAR(64));"
+		  Campus VARCHAR(20), Rooms VARCHAR(128));"
+
+CODES_SQL_TABLE = "(Code VARCHAR(64), Name VARCHAR(256), LastUpdated BIGINT);"
 
 # These are parameters that will be fetched from the page.
 auto_params = ["__EVENTTARGET", "__EVENTARGUMENT", "__LASTFOCUS", "__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION", "tLinkType",
@@ -113,7 +116,7 @@ def get_all(days, weeks, season):
 		add_to_db(data[v], v)
 
 # Gets a dict with human-readable names for subjects as keys, codes for fetching as values.
-def get_subject_codes(season):
+def get_subject_codes(season, db=False):
 	results = OrderedDict()
 
 	with requests.Session() as s:
@@ -132,6 +135,21 @@ def get_subject_codes(season):
 		if l != None:
 			for o in l.find_all('option'):
 				results.update({o.getText(): o.get('value')})
+	
+	if db:
+		db_data = []
+		current_time = int(mktime(dt.datetime.utcnow().timetuple()))
+		for k, v in results.iteritems():
+			db_data.append((v, k, current_time))
+		try:
+			db_con = sql.connect("timetable.db")
+			with db_con:
+				cur = db_con.cursor()
+				cur.execute("DROP TABLE IF EXISTS Subjects;")
+				cur.execute("CREATE TABLE Subjects " + CODES_SQL_TABLE)
+				cur.executemany("INSERT INTO Subjects VALUES (?, ?, ?);", db_data)	
+		except sql.Error, e:
+			print "SQL error: " + str(e)
 
 	return results
 
@@ -283,7 +301,6 @@ def add_to_db(timetable, code):
 # "t" means this week
 # for spring this can be either range(1,31), range(1,30) or a number (not guaranteed to work, returns error)
 weeks = ";".join(str(_) for _ in range(1,31))
-print "-" + weeks + "-"
 # weeks = "t"
 #weeks = " 3"
 
@@ -297,7 +314,7 @@ period = "v"
 #subject_code = "#SPLUSE0C745"
 subject_code = "#SPLUS1DC14A"
 # Gets all timetable data, adds to database
-get_all(days, weeks, period)
+# get_all(days, weeks, period)
 
 # Example for getting the time table and printing it out as csv
 # print get_week(days, weeks, subject_code, period, csv=True)
@@ -307,6 +324,6 @@ get_all(days, weeks, period)
 # add_to_db(tab, subject_code)
 
 # Example for printing subject codes
-# 	subject_codes = get_subject_codes("v")
+subject_codes = get_subject_codes("v", db=True)
 # for k, v in subject_codes.items(): print k + ": " + v
 
