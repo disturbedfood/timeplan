@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import dbtools
 import timeplan
 
@@ -8,6 +9,7 @@ import timeplan
 # "h": fetching for autumn, for spring use "v"
 
 # "1-6": fetching for mon-sat, can be "1-3", "4-6"
+
 
 courses = timeplan.retrieve_course_codes("h")
 justafew = {}

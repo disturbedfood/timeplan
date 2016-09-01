@@ -9,6 +9,7 @@ from collections import OrderedDict
 import re
 from dateutil import parser
 import hashlib
+import codecs
 
 ROOMS_RE = re.compile('(.\d \d{3})')
 SUB_CODE_RE = re.compile('([A-Z]{2,3}[^\s]\d{3})')
@@ -23,6 +24,7 @@ day_convert = {"Man": "Mon", "Tir": "Tue", "Ons": "Wed", "Tor": "Thu", "Fre": "F
 # Parses type of lesson. NOTE: THIS IS NOT WORKING AT THE MOMENT
 def parse_type(type_check):
 	type_check = type_check.lower()
+	print type_check
 	type = ""
 
 	if "for" in type_check:
@@ -113,16 +115,20 @@ def get_all(courses, days, weeks, season):
 # Gets a dict with course hashes as keys and human readable names for courses as values.
 def retrieve_course_codes(season):
 	data = {}
+	html = None
 	raw_data = None
+	# Check if the HTML contains the pWeeks tag (not used, but sometimes we won't get all course data and that happens when not all the HTML is in)
+	contains_weeks = None
 	
 	with requests.Session() as s:
-		while not raw_data:
+		while not raw_data and not contains_weeks:
 			req = s.get(get_query_url(season))
 			html = BeautifulSoup(req.text, 'lxml')
 			# Won't get all data unless we wait a bit. Also gives the server some grace time between eventual loops.
-			sleep(1)
+			sleep(2)
 			raw_data = html.find(id='dlObject')
-	
+			contains_weeks = html.find(id='pWeeks')
+
 	# We got our data, now structure it in our data dict (use hash for id)
 	for c in raw_data.find_all('option'):
 		id = hashlib.md5(c.get('value').encode('utf-8')).hexdigest()[0:10]
@@ -210,6 +216,7 @@ def get_row_info(row, week_no, csv=False):
 					info = val
 				
 				# Check for types of lectures.
+				'''
 				type_check = re.split("\/| ", val)
 	
 				for i in range(len(type_check)):
@@ -221,6 +228,8 @@ def get_row_info(row, week_no, csv=False):
 				info =  " ".join(type_check)
 				if not course_type:
 					course_type = "See info"
+				'''
+				course_type = parse_type(val)
 	
 				# Remove pointless numbers and symbols in front of info	
 				while len(info) > 0 and (not info[0].isalpha() and not info[0] in "æøå"):
