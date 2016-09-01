@@ -10,12 +10,18 @@ import timeplan
 
 # "1-6": fetching for mon-sat, can be "1-3", "4-6"
 
+#print timeplan.parse_type("g/forel/01")
+
+
 
 courses = timeplan.retrieve_course_codes("h")
+dbtools.save_course_codes(courses)
+print "Added courses to database."
+
 justafew = {}
 count = 0
 for k, v in courses.iteritems():
-	if count > 5: break
+	if count > 199: break
 	justafew[k] = v
 	count += 1
 
@@ -23,5 +29,5 @@ tt = timeplan.get_all(justafew, "1-6", "t", "h")
 
 for k, v in tt.iteritems():
 	dbtools.add_to_db(v, k)
-	
-dbtools.save_course_codes(courses)
+
+print "Added all timetables to database."

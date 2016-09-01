@@ -21,7 +21,6 @@ def add_to_db(timetable, code):
 			cur.execute("DROP TABLE IF EXISTS " + table)
 			cur.execute("CREATE TABLE " + table + ROWS_SQL_TABLE)
 			cur.executemany("INSERT INTO " + table + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", timetable)
-			# print "Timetable inserted into database"
 
 	except sql.Error, e:
 		print "SQL error:", str(e)

@@ -10,7 +10,6 @@ import re
 from dateutil import parser
 import hashlib
 import codecs
-
 ROOMS_RE = re.compile('(.\d \d{3})')
 SUB_CODE_RE = re.compile('([A-Z]{2,3}[^\s]\d{3})')
 
@@ -23,21 +22,27 @@ day_convert = {"Man": "Mon", "Tir": "Tue", "Ons": "Wed", "Tor": "Thu", "Fre": "F
 
 # Parses type of lesson. NOTE: THIS IS NOT WORKING AT THE MOMENT
 def parse_type(type_check):
-	type_check = type_check.lower()
-	print type_check
+	type_check = type_check.lower().split("/")
 	type = ""
-
-	if "for" in type_check:
-		type += "Lecture"
-	if "sem" in type_check:
-		if len(type) > 0: type += "/"
-		type += "Seminar"
-	if "øv" in type_check or "lab" in type_check:
-		if len(type) > 0: type += "/"
-		type += "Practice"
 	
-	if len(type) == 0: return "See info"
-	else: return type
+	for i in range(0, len(type_check) - 1):
+		if (len(type_check) - 1) < i: break
+		if "for" in type_check[i]:
+			type += "Lecture"
+			del type_check[i]
+		if (len(type_check) - 1) < i: break
+		if "sem" in type_check[i]:
+			if len(type) > 0: type += "/"
+			type += "Seminar"
+			del type_check[i]
+		if (len(type_check) - 1) < i: break
+		if "øv" in type_check[i] or "lab" in type_check[i]:
+			if len(type) > 0: type += "/"
+			type += "Practice"
+			del type_check[i]
+		
+	if len(type) == 0: return ["See info", " ".join(type_check)]
+	else: return [type, " ".join(type_check)]
 
 # Get correct url
 def get_query_url(season):
@@ -121,11 +126,11 @@ def retrieve_course_codes(season):
 	contains_weeks = None
 	
 	with requests.Session() as s:
-		while not raw_data and not contains_weeks:
+		while not raw_data and contains_weeks == None:
 			req = s.get(get_query_url(season))
 			html = BeautifulSoup(req.text, 'lxml')
-			# Won't get all data unless we wait a bit. Also gives the server some grace time between eventual loops.
-			sleep(2)
+			# Give server a little grace time (sorry, server)
+			sleep(1)
 			raw_data = html.find(id='dlObject')
 			contains_weeks = html.find(id='pWeeks')
 
@@ -133,7 +138,16 @@ def retrieve_course_codes(season):
 	for c in raw_data.find_all('option'):
 		id = hashlib.md5(c.get('value').encode('utf-8')).hexdigest()[0:10]
 		data.update({id: (c.getText(), c.get('value'))})
-		
+	
+	print "Fetched", len(data), "courses."
+	if len(data) < 435:
+		deb = codecs.open("html.txt", "w", "utf-8")
+		deb.write(html.prettify())
+		print "wrote debug file"
+		print contains_weeks
+		print html.find(id='pWeeks')
+		deb.close()
+	
 	return data
 
 # Sorts out the raw HTML for the site, passing what's needed into get_row_info
@@ -216,20 +230,11 @@ def get_row_info(row, week_no, csv=False):
 					info = val
 				
 				# Check for types of lectures.
-				'''
-				type_check = re.split("\/| ", val)
-	
-				for i in range(len(type_check)):
-					course_type = parse_type(type_check[i])
-					if course_type != None:
-						del type_check[i]
-						break
-						
-				info =  " ".join(type_check)
-				if not course_type:
-					course_type = "See info"
-				'''
-				course_type = parse_type(val)
+				
+				type_check = parse_type(val)
+				
+				course_type = type_check[0]		
+				info =  type_check[1]
 	
 				# Remove pointless numbers and symbols in front of info	
 				while len(info) > 0 and (not info[0].isalpha() and not info[0] in "æøå"):
