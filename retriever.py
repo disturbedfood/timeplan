@@ -18,16 +18,19 @@ courses = timeplan.retrieve_course_codes("h")
 dbtools.save_course_codes(courses)
 print "Added courses to database."
 
+'''
 justafew = {}
 count = 0
 for k, v in courses.iteritems():
-	if count > 199: break
+	if count > 5: break
 	justafew[k] = v
 	count += 1
+'''
 
-tt = timeplan.get_all(justafew, "1-6", "t", "h")
+tt = timeplan.get_all(courses, "1-6", "t", "h")
 
-for k, v in tt.iteritems():
+dbtools.save_subject_codes(tt[1])
+for k, v in tt[0].iteritems():
 	dbtools.add_to_db(v, k)
 
 print "Added all timetables to database."
