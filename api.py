@@ -60,14 +60,14 @@ def subjects(search=None):
 @app.route(base + '/<subject>/')
 def index(subject, week=None):
 	# Hash sign can be included (needs to be escaped) or omitted
-	if subject[0] != "#" and "SPLUS" in subject: subject = "#" + subject
+	# if subject[0] != "#" and "SPLUS" in subject: subject = "#" + subject
 	
 	# Set valid week 
 	if not week or not week.isdigit(): week = dt.date.today().isocalendar()[1]
 	else: week = int(week)
 
 	data = fetch_from_db(timetable_query(subject, week))
-	subject_data = fetch_from_db("SELECT Name, LastUpdated FROM Subjects WHERE Code = '%s';" % subject)	
+	subject_data = fetch_from_db("SELECT Name, LastUpdated FROM Subjects WHERE HashCode = '%s';" % subject)	
 
 	if len(subject_data) == 0: return jsonify(json_error("Could not find subject"))
 

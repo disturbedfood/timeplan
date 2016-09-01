@@ -2,25 +2,17 @@
 from __future__ import unicode_literals
 import requests
 from bs4 import BeautifulSoup
-from time import sleep, mktime
+from time import sleep
 import datetime as dt
 from urllib2 import urlopen
 from collections import OrderedDict
 import re
 from dateutil import parser
-import sqlite3 as sql
-
-
-RADIO_TYPE = "XMLSpreadsheet;studentsetxmlurl;SWSCUST+StudentSet+XMLSpreadsheet"
+import hashlib
 
 ROOMS_RE = re.compile('(.\d \d{3})')
 SUB_CODE_RE = re.compile('([A-Z]{2,3}[^\s]\d{3})')
 
-ROWS_SQL_TABLE = "(Week INT, Weekday VARCHAR(3), Date VARCHAR(10), StartTime VARCHAR(5), \
-		  EndTime VARCHAR(5), Course VARCHAR(16), Type VARCHAR(10), Info VARCHAR(64), \
-		  Campus VARCHAR(20), Rooms VARCHAR(128));"
-
-CODES_SQL_TABLE = "(Code VARCHAR(64), Name VARCHAR(256), LastUpdated BIGINT);"
 
 # These are parameters that will be fetched from the page.
 auto_params = ["__EVENTTARGET", "__EVENTARGUMENT", "__LASTFOCUS", "__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION", "tLinkType",
@@ -28,22 +20,53 @@ auto_params = ["__EVENTTARGET", "__EVENTARGUMENT", "__LASTFOCUS", "__VIEWSTATE",
 
 day_convert = {"Man": "Mon", "Tir": "Tue", "Ons": "Wed", "Tor": "Thu", "Fre": "Fri", "Lør": "Sat"}
 
-# Gets all the parameters in auto_params from the site, returns for addition along with other needed params
-def populate_parameters(session, season):
-	params = {}
+# Parses type of lesson. NOTE: THIS IS NOT WORKING AT THE MOMENT
+def parse_type(type_check):
+	type_check = type_check.lower()
+	type = ""
 
+	if "for" in type_check:
+		type += "Lecture"
+	if "sem" in type_check:
+		if len(type) > 0: type += "/"
+		type += "Seminar"
+	if "øv" in type_check or "lab" in type_check:
+		if len(type) > 0: type += "/"
+		type += "Practice"
+	
+	if len(type) == 0: return "See info"
+	else: return type
+
+# Get correct url
+def get_query_url(season):
+	return "http://timeplan.uia.no/swsuia" + season + "/public/no/default.aspx"
+
+# Gets the parameters that should be used for requesting timetable data from server.
+def get_parameters(session, days, weeks, subject_code, season):
+	params = {
+		'RadioType': "XMLSpreadsheet;studentsetxmlurl;SWSCUST+StudentSet+XMLSpreadsheet",
+		'lbDays': days,
+		'lbWeeks': weeks,
+		'dlObject': subject_code
+	}
+	
 	r = False
 	soup = False
 	params['__EVENTVALIDATION'] = False
-
-	# Try until we get the needed parameters
+	
+	# Get our event validation token
 	while not params['__EVENTVALIDATION']:
+		# Give some grace period (don't spam the server - at least too much)
 		sleep(0.5)
-		r = session.get("http://timeplan.uia.no/swsuia" + season + "/public/no/login.aspx")
+		
+		# Load up the page to get parameters from
+		r = session.get(get_query_url(season))
+		
+		# Save the event validation token
 		soup = BeautifulSoup(r.text, 'lxml')
 		params['__EVENTVALIDATION'] = soup.find(id='__EVENTVALIDATION')
-
-	# Get parameters from the page
+	
+	# Now we need to save all the needed parameters
 	for p in auto_params:
 		thing = soup.find(id=p)
 		if thing != None:
@@ -54,107 +77,62 @@ def populate_parameters(session, season):
 				params[p] = ""
 		else:
 			params[p] = p
-
+	
 	return params
-
-# Gets a specific week of a timetable. (returns lists by default, csv format is an option)
-def get_week(days, weeks, subject_code, season, csv=False):
-	url = "http://timeplan.uia.no/swsuia" + season + "/public/no/default.aspx"
-	html = ""
-
-	# We need to set these parameters ourselves
-	params = {
-		'RadioType': RADIO_TYPE,
-		'lbDays': days,
-		'lbWeeks': weeks,
-		'dlObject': subject_code
-	}
-	s = requests.Session()
-	
-	r = False
-	soup = False
-	params['__EVENTVALIDATION'] = False
-	
-	new_params = populate_parameters(s, season)
-
-	for k, v in new_params.iteritems():
-		params[k] = v
-
-	# Get the actual time table, with params as the payload
-	r = s.post(url, data=params)
-	s.close()
-	
-	return convert_to_table_format(r.text, csv)
-
-# Gets the timetable for all subjects, in whatever weeks specified.
-def get_all(days, weeks, season):
-	url = "http://timeplan.uia.no/swsuia" + season + "/public/no/default.aspx"
+		
+# Gets the timetable for all subjects in dict, in whatever weeks specified.
+def get_all(courses, days, weeks, season):
+	url = get_query_url(season)
 	data = {}
-	subjects = get_subject_codes(season)
-	s = requests.Session()
-
-	params = {
-		'RadioType': RADIO_TYPE,
-		'lbDays': days,
-		'lbWeeks': weeks, 
-		'dlObject': ""
-	}
-
-	# Populate the session for the event, so we can use the same one for each subject.
-	new_params = populate_parameters(s, season)
-
-	for k, v in new_params.iteritems():
-		params[k] = v
-
-	for k, v in subjects.iteritems():
-		params['dlObject'] = v
-		r = s.post(url, data=params)
-		data[v] = convert_to_table_format(r.text, False)
-		print "Got data for", k, str(len(data[v])), "rows of data"
-		if len(data[v]) > 0: print data[v][0]
-		print len(data)
-		add_to_db(data[v], v)
-
-# Gets a dict with human-readable names for subjects as keys, codes for fetching as values.
-def get_subject_codes(season, db=False):
-	results = OrderedDict()
-
-	with requests.Session() as s:
-		r = False
-		soup = False
-		l = False
-
-		# Try until we get what we want
-		while not l:
-			sleep(0.5)
-			r = s.get("http://timeplan.uia.no/swsuia" + season + "/public/no/login.aspx")
-			soup = BeautifulSoup(r.text, 'lxml')
-			l = soup.find(id='dlObject')
-
-		# Make an ordered dict with subject titles and their respective codes
-		if l != None:
-			for o in l.find_all('option'):
-				results.update({o.getText(): o.get('value')})
 	
-	if db:
-		db_data = []
-		current_time = int(mktime(dt.datetime.utcnow().timetuple()))
-		for k, v in results.iteritems():
-			db_data.append((v, k, current_time))
-		try:
-			db_con = sql.connect("timetable.db")
-			with db_con:
-				cur = db_con.cursor()
-				cur.execute("DROP TABLE IF EXISTS Subjects;")
-				cur.execute("CREATE TABLE Subjects " + CODES_SQL_TABLE)
-				cur.executemany("INSERT INTO Subjects VALUES (?, ?, ?);", db_data)	
-		except sql.Error, e:
-			print "SQL error: " + str(e)
+	s = requests.Session()
+	
+	print "Setting parameters.."
+	# Subject code gets set in the loop so empty string is fine here
+	params = get_parameters(s, days, weeks, "", season)
+	counter = 0
+	print "Getting course data.."
+	for k, v in courses.iteritems():
+		counter += 1
+		# Set the subject code for the request
+		params['dlObject'] = v[1]
+		
+		# Fetch the data (raw)
+		r = s.post(url, data=params)
+		
+		# Convert the raw data into a list of tuples
+		data[k] = convert_to_table_format(r.text, csv=False)
+		if data[k] == None:
+			print "Could not get data for", k + ". Skipping"
+			continue
+			
+		print "Got data for", k + ",", str(len(data[k])), "rows of data,", counter,"/",len(courses)
+		
+	return data
 
-	return results
+# Gets a dict with course hashes as keys and human readable names for courses as values.
+def retrieve_course_codes(season):
+	data = {}
+	raw_data = None
+	
+	with requests.Session() as s:
+		while not raw_data:
+			req = s.get(get_query_url(season))
+			html = BeautifulSoup(req.text, 'lxml')
+			# Won't get all data unless we wait a bit. Also gives the server some grace time between eventual loops.
+			sleep(1)
+			raw_data = html.find(id='dlObject')
+	
+	# We got our data, now structure it in our data dict (use hash for id)
+	for c in raw_data.find_all('option'):
+		id = hashlib.md5(c.get('value').encode('utf-8')).hexdigest()[0:10]
+		data.update({id: (c.getText(), c.get('value'))})
+		
+	return data
 
 # Sorts out the raw HTML for the site, passing what's needed into get_row_info
-def convert_to_table_format(html, csv):
+# If csv is set to false it will create a list with all the information, with csv it makes a long string
+def convert_to_table_format(html, csv=False):
 	soup = BeautifulSoup(html, 'lxml')
 	tab = soup.find_all('table')
 	table = []
@@ -167,7 +145,8 @@ def convert_to_table_format(html, csv):
 			try: 
 				row_type = week_row.get('class')
 			except:
-				print week_table
+				print "------------------ Error getting data for this. Refetching/retrying."
+				return None
 
 			# tr1 means this is a table header
 			if "tr1" in row_type:
@@ -185,8 +164,9 @@ def convert_to_table_format(html, csv):
 
 	return table
 
+	
 # Handles raw HTML from each individual row, converting into a tuple for database insertion/return
-def get_row_info(row, week_no, csv):
+def get_row_info(row, week_no, csv=False):
 	week_day = ""
 	date = ""
 	start_time = ""
@@ -219,6 +199,7 @@ def get_row_info(row, week_no, csv):
 			# Extract info like subject code, type of class
 			elif i == 3:
 				# Find course codes. If it can't be found, all the info will be in the info column.
+				# Use this to map actual courses.
 				course_codes = re.findall(SUB_CODE_RE, val)
 				if len(course_codes) > 0:
 					course_code = "/".join(course_codes)
@@ -230,22 +211,13 @@ def get_row_info(row, week_no, csv):
 				
 				# Check for types of lectures.
 				type_check = re.split("\/| ", val)
-
-				for i in range(0, len(type_check)):
-					if "for" in type_check[i].lower():
-						course_type = "Lecture"
+	
+				for i in range(len(type_check)):
+					course_type = parse_type(type_check[i])
+					if course_type != None:
 						del type_check[i]
 						break
-
-					elif "sem" in type_check[i].lower():
-						course_type = "Seminar"
-						del type_check[i]
-						break
-
-					elif "øv" in type_check[i].lower() or "lab" in type_check[i].lower():
-						course_type = "Practice"
-						del type_check[i]
-						break
+						
 				info =  " ".join(type_check)
 				if not course_type:
 					course_type = "See info"
@@ -272,58 +244,6 @@ def get_row_info(row, week_no, csv):
 				else:
 					rooms = val
 
-			# No need to add names of lecturers etc
-			elif i == 5:
-				continue
-
 	vals = (week_no, week_day, date, start_time, end_time, course_code, course_type, info, campus, rooms)
 	if csv: vals = ";".join(vals) + ";\n"
 	return vals
-
-# Adds a subjects timetable to the database, with the code as the table name.
-# Adding to the database will overwrite any existing subject information.
-def add_to_db(timetable, code):
-	try: 
-		db_con = sql.connect("timetable.db")
-		db_con.text_factory = str
-		with db_con:
-			table = "\"" + code + "\""
-			cur = db_con.cursor()
-			cur.execute("DROP TABLE IF EXISTS " + table)
-			cur.execute("CREATE TABLE " + table + ROWS_SQL_TABLE)
-			cur.executemany("INSERT INTO " + table + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", timetable)
-			print "Timetable inserted into database"
-
-	except sql.Error, e:
-		print "SQL error:", str(e)
-
-
-# "t" means this week
-# for spring this can be either range(1,31), range(1,30) or a number (not guaranteed to work, returns error)
-weeks = ";".join(str(_) for _ in range(1,31))
-# weeks = "t"
-#weeks = " 3"
-
-# Can be 1-3 (mon-wed), 4-6 (thu-sat) or 1-6 (mon-sat)
-days = "1-6"
-
-# "v" for spring, "h" for autumn
-period = "v"
-
-# Get a valid code through get_subject_codes
-#subject_code = "#SPLUSE0C745"
-subject_code = "#SPLUS1DC14A"
-# Gets all timetable data, adds to database
-# get_all(days, weeks, period)
-
-# Example for getting the time table and printing it out as csv
-# print get_week(days, weeks, subject_code, period, csv=True)
-
-# Example for getting the time table and adding it to the database
-# tab = get_week(days, weeks, subject_code, period)
-# add_to_db(tab, subject_code)
-
-# Example for printing subject codes
-subject_codes = get_subject_codes("v", db=True)
-# for k, v in subject_codes.items(): print k + ": " + v
-
