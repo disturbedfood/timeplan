@@ -16,7 +16,7 @@ def timetable_query(course_code, week):
 	return "SELECT Weekday, Date, StartTime, EndTime, Subject, Type, Info, Campus, Rooms FROM '%s' \
 		WHERE Week = %s;" % (course_code, str(week))
 
-def timetable_query(course_code, week, subject_code):
+def timetable_query_with_sub(course_code, week, subject_code):
 	return "SELECT Weekday, Date, StartTime, EndTime, Subject, Type, Info, Campus, Rooms FROM '%s' \
 		WHERE Week = %s AND Subject LIKE '%%%s%%';" % (course_code, str(week), subject_code)
 
@@ -71,7 +71,7 @@ def subjects():
 @app.route(base + "/subject/<subject>/")
 def subject(subject, week=None):
 	if not len(subject) == 6 and re.match("^[A-Za-z0-9_-]*$", subject):
-		return jsonify({"error": "course code must be 6 characters long and alphanumeric."})
+		return jsonify({"error": "subject code must be 6 characters long and alphanumeric."})
 
 	# Set valid week 
 	if not week or not week.isdigit(): week = dt.date.today().isocalendar()[1]
@@ -81,7 +81,7 @@ def subject(subject, week=None):
 	if len(course_code) == 0: return jsonify(json_error("Could not find subject"))
 	else: course_code = course_code[0][0]
 
-	data = fetch_from_db(timetable_query(course_code, week, subject))
+	data = fetch_from_db(timetable_query_with_sub(course_code, week, subject))
 	course_data = fetch_from_db("SELECT Name, LastUpdated FROM Courses WHERE HashCode = '%s';" % course_code)
 	if len(course_data) == 0: return jsonify(json_error("Could not find course"))
 	print course_data
