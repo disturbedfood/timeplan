@@ -20,6 +20,8 @@ auto_params = ["__EVENTTARGET", "__EVENTARGUMENT", "__LASTFOCUS", "__VIEWSTATE",
 
 day_convert = {"Man": "Mon", "Tir": "Tue", "Ons": "Wed", "Tor": "Thu", "Fre": "Fri", "Lør": "Sat"}
 
+subjects = {}
+
 # Parses type of lesson. NOTE: THIS IS NOT WORKING AT THE MOMENT
 def parse_type(type_check):
 	type_check = type_check.lower().split("/")
@@ -27,22 +29,24 @@ def parse_type(type_check):
 	
 	for i in range(0, len(type_check) - 1):
 		if (len(type_check) - 1) < i: break
-		if "for" in type_check[i]:
+
+		elif "for" in type_check[i]:
 			type += "Lecture"
 			del type_check[i]
-		if (len(type_check) - 1) < i: break
-		if "sem" in type_check[i]:
+
+		elif "sem" in type_check[i]:
+
 			if len(type) > 0: type += "/"
 			type += "Seminar"
 			del type_check[i]
-		if (len(type_check) - 1) < i: break
-		if "øv" in type_check[i] or "lab" in type_check[i]:
+
+		elif "øv" in type_check[i] or "lab" in type_check[i]:
 			if len(type) > 0: type += "/"
 			type += "Practice"
 			del type_check[i]
 		
-	if len(type) == 0: return ["See info", " ".join(type_check)]
-	else: return [type, " ".join(type_check)]
+	if len(type) == 0: type = "See info"
+	return (type, " ".join(type_check))
 
 # Get correct url
 def get_query_url(season):
@@ -108,14 +112,14 @@ def get_all(courses, days, weeks, season):
 		r = s.post(url, data=params)
 		
 		# Convert the raw data into a list of tuples
-		data[k] = convert_to_table_format(r.text, csv=False)
+		data[k] = convert_to_table_format(r.text, k, csv=False)
 		if data[k] == None:
 			print "Could not get data for", k + ". Skipping"
 			continue
 			
 		print "Got data for", k + ",", str(len(data[k])), "rows of data,", counter,"/",len(courses)
 		
-	return data
+	return (data, subjects)
 
 # Gets a dict with course hashes as keys and human readable names for courses as values.
 def retrieve_course_codes(season):
@@ -152,7 +156,7 @@ def retrieve_course_codes(season):
 
 # Sorts out the raw HTML for the site, passing what's needed into get_row_info
 # If csv is set to false it will create a list with all the information, with csv it makes a long string
-def convert_to_table_format(html, csv=False):
+def convert_to_table_format(html, k, csv=False):
 	soup = BeautifulSoup(html, 'lxml')
 	tab = soup.find_all('table')
 	table = []
@@ -178,21 +182,22 @@ def convert_to_table_format(html, csv=False):
 			if "tr2" in row_type:
 				row = week_row.find_all('td')
 				if csv:
-					table += get_row_info(row, week_no, csv)
+					table += get_row_info(row, week_no, k)
 				else:
-					table.append(get_row_info(row, week_no, csv))
+					table.append(get_row_info(row, week_no, k))
 
 	return table
 
 	
 # Handles raw HTML from each individual row, converting into a tuple for database insertion/return
-def get_row_info(row, week_no, csv=False):
+def get_row_info(row, week_no, k, csv=False):
+	global subjects
 	week_day = ""
 	date = ""
 	start_time = ""
 	end_time = ""
-	course_code = ""
-	course_type = ""
+	subject_code = ""
+	subject_type = ""
 	info = ""
 	campus = ""
 	rooms = ""
@@ -220,20 +225,21 @@ def get_row_info(row, week_no, csv=False):
 			elif i == 3:
 				# Find course codes. If it can't be found, all the info will be in the info column.
 				# Use this to map actual courses.
-				course_codes = re.findall(SUB_CODE_RE, val)
-				if len(course_codes) > 0:
-					course_code = "/".join(course_codes)
-					for c in course_codes:
+				subject_codes = re.findall(SUB_CODE_RE, val)
+				if len(subject_codes) > 0:
+					subject_code = "/".join(subject_codes)
+					for c in subject_codes:
 						val = val.replace(c, "")
+						subjects[c] = k
 				else: 
-					course_code = "See info"
+					subject_code = "See info"
 					info = val
 				
 				# Check for types of lectures.
 				
 				type_check = parse_type(val)
 				
-				course_type = type_check[0]		
+				subject_type = type_check[0]		
 				info =  type_check[1]
 	
 				# Remove pointless numbers and symbols in front of info	
@@ -258,6 +264,6 @@ def get_row_info(row, week_no, csv=False):
 				else:
 					rooms = val
 
-	vals = (week_no, week_day, date, start_time, end_time, course_code, course_type, info, campus, rooms)
+	vals = (week_no, week_day, date, start_time, end_time, subject_code, subject_type, info, campus, rooms)
 	if csv: vals = ";".join(vals) + ";\n"
 	return vals
