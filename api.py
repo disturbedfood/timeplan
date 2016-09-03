@@ -67,7 +67,7 @@ def subjects():
 	return jsonify({'subjects': rows})
 
 
-@app.route(base + "/subject/<subject>/<week>")
+@app.route(base + "/subject/<subject>/<week>/")
 @app.route(base + "/subject/<subject>/")
 def subject(subject, week=None):
 	if not len(subject) == 6 and re.match("^[A-Za-z0-9_-]*$", subject):
