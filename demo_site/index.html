@@ -41,7 +41,7 @@
       <div class="twelve columns" style="margin-top: 10%">
 		<h2>Timeplan</h2>
 		<label style="margin-top:40px;">Selected course:</label>
-    <span id="selected-course" style="margin-bottom:15px;"></span>
+    <div id="selected-course" style="height:30px;"></div>
 		<div class="row" style="height:40px;">
 			<div class="ten columns">
 				<input class="u-full-width" placeholder="Enter course name" id="course-selection" type="text">
@@ -54,17 +54,18 @@
     
     <div class="row" style="margin-top:40px;">
       <div class="six columns">
-        <label for="subjectNameInput">Additional subjects (max 5):</label>
-        <ul id="selected-subjects"></ul>
         <input placeholder="Enter subject name" id="subject-selection" type="text">
         <input class="button-primary" id="addsubject" value="Add" type="submit">
+        <label for="subjectNameInput">Additional subjects (max 5):</label>
+        <ul id="selected-subjects"></ul>
       </div>
 
       <div class="six columns">
-        <label for="subjectNameInput">Excluded subjects:</label>
-        <ul id="excluded-subjects"></ul>
         <input  placeholder="Enter subject name" id="excluded-subject-selection" type="text">
         <input class="button-primary" id="excludesubject" value="Add" type="submit">
+        <label for="subjectNameInput">Excluded subjects:</label>
+        <ul id="excluded-subjects"></ul>
+
       </div>
     </div>
 
