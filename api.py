@@ -5,11 +5,13 @@ import sqlite3 as sql
 import datetime as dt
 import os
 import re
+from flask_cors import CORS, cross_origin
 
 base = "/timeplan/2.0"
 
 data_index = ["week_day", "date", "start_time", "end_time", "subject", "type", "info", "campus", "rooms"]
 app = Flask(__name__)
+CORS(app)
 
 # Build a query to fetch the actual timetable
 def timetable_query(course_code, week):
@@ -130,4 +132,4 @@ def course(course, week=None):
 
 
 if __name__== '__main__':
-	app.run(debug=True)
+	app.run()
