@@ -24,26 +24,21 @@ subjects = {}
 
 # Parses type of lesson. NOTE: THIS IS NOT WORKING AT THE MOMENT
 def parse_type(type_check):
-	type_check = type_check.lower().split("/")
+	# Check both / and whitespace separators
+	type_check = re.split("[\/\s]", type_check.lower())
 	type = ""
-	
-	for i in range(0, len(type_check) - 1):
-		if (len(type_check) - 1) < i: break
 
-		elif "for" in type_check[i]:
+	for i in range(0, len(type_check) - 1):
+		if "for" in type_check[i]:
 			type += "Lecture"
-			del type_check[i]
 
 		elif "sem" in type_check[i]:
-
 			if len(type) > 0: type += "/"
 			type += "Seminar"
-			del type_check[i]
 
 		elif "øv" in type_check[i] or "lab" in type_check[i]:
 			if len(type) > 0: type += "/"
 			type += "Practice"
-			del type_check[i]
 		
 	if len(type) == 0: type = "See info"
 	return (type, " ".join(type_check))
@@ -209,7 +204,10 @@ def get_row_info(row, week_no, k, csv=False):
 
 			# Convert weekdays
 			if i == 0:
+                            try:
 				week_day = day_convert[val]
+                            except KeyError:
+                                week_day = "Err"
 
 			# Properly format dates (these are English)
 			if i == 1:

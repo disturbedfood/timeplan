@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Timeplan</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/timeplan.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+  
+  <script type="text/javascript" src="js/jquery-3.1.0.min.js"></script>
+  <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
+  <script type="text/javascript" src="js/timeplan.js"></script>
+  </head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+    
+      <div class="twelve columns" style="margin-top: 10%">
+		<h2>Timeplan</h2>
+		<label style="margin-top:40px;">Selected course:</label>
+    <div id="selected-course" style="height:30px;"></div>
+		<div class="row" style="height:40px;">
+			<div class="ten columns">
+				<input class="u-full-width" placeholder="Enter course name" id="course-selection" type="text">
+			</div>
+			<div class="two columns">
+				<input class="button-primary" id="getcourse" value="Select" type="submit">
+			</div>
+		</div>
+
+    
+    <div class="row" style="margin-top:40px;">
+      <div class="six columns">
+        <input placeholder="Enter subject name" id="subject-selection" type="text">
+        <input class="button-primary" id="addsubject" value="Add" type="submit">
+        <label for="subjectNameInput">Additional subjects (max 5):</label>
+        <ul id="selected-subjects"></ul>
+      </div>
+
+      <div class="six columns">
+        <input  placeholder="Enter subject name" id="excluded-subject-selection" type="text">
+        <input class="button-primary" id="excludesubject" value="Add" type="submit">
+        <label for="subjectNameInput">Excluded subjects:</label>
+        <ul id="excluded-subjects"></ul>
+
+      </div>
+    </div>
+
+    <div class="twelve columns" style="margin-top:40px;">
+        <input class="u-full-width button-primary" id="go" value="Go" type="submit">
+    </div>
+
+
+		<div hidden class="autocomplete-suggestions">
+			<div class="autocomplete-group"><strong>NHL</strong></div>
+			<div class="autocomplete-suggestion autocomplete-selected">...</div>
+			<div class="autocomplete-suggestion">...</div>
+			<div class="autocomplete-suggestion">...</div>
+		</div>
+		<p id="out"></p>
+      </div>
+    
+  </div>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+</html>
