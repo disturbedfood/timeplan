@@ -204,7 +204,10 @@ def get_row_info(row, week_no, k, csv=False):
 
 			# Convert weekdays
 			if i == 0:
+                            try:
 				week_day = day_convert[val]
+                            except KeyError:
+                                week_day = "Err"
 
 			# Properly format dates (these are English)
 			if i == 1:
