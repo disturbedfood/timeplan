@@ -27,20 +27,26 @@ def parse_type(type_check):
 	# Check both / and whitespace separators
 	type_check = re.split("[\/\s]", type_check.lower())
 	type = ""
-
+        del_indeces = []
 	for i in range(0, len(type_check) - 1):
 		if "for" in type_check[i]:
+                        if len(type) > 0: type += "/"
 			type += "Lecture"
+                        del_indeces.append(type_check[i])
 
 		elif "sem" in type_check[i]:
 			if len(type) > 0: type += "/"
 			type += "Seminar"
+                        del_indeces.append(type_check[i])
 
 		elif "øv" in type_check[i] or "lab" in type_check[i]:
 			if len(type) > 0: type += "/"
 			type += "Practice"
-		
-	if len(type) == 0: type = "See info"
+                        del_indeces.append(type_check[i])
+        
+        type_check = [t for t in type_check if t not in del_indeces]
+
+	if len(type) == 0: type = ("See info", " ".join(type_check))
 	return (type, " ".join(type_check))
 
 # Get correct url
@@ -204,7 +210,10 @@ def get_row_info(row, week_no, k, csv=False):
 
 			# Convert weekdays
 			if i == 0:
+                            try:
 				week_day = day_convert[val]
+                            except KeyError:
+                                week_day = "Err"
 
 			# Properly format dates (these are English)
 			if i == 1:
