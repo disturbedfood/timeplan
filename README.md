@@ -13,6 +13,7 @@ A fetcher script and API for timetables at the University of Agder.
 **Additional dependencies:**
 
 	flask
+    flask_cors
 
 Queries the database for timetable information.  
 
