@@ -1,3 +1,24 @@
+#selected-course {
+	height: 30px;
+}
+
+#subjects-from-course li {
+	list-style: none;
+}
+
+#subjects-from-course li input {
+	margin-left: 20px;
+	padding:5px;
+	height:30px;
+	vertical-align: middle;
+}
+
+#subjects-from-course .excluded {
+	color: gray;
+}
+
+
+
 .autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
 .autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
 .autocomplete-selected { background: #F0F0F0; }
