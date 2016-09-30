@@ -13,7 +13,7 @@ import codecs
 from structures import DataRow, Course
 
 ROOMS_RE = re.compile('(.\d \d{3})')
-SUB_CODE_RE = re.compile('([A-Z]{2,3}[^\s]\d{3})')
+SUB_CODE_RE = re.compile('([A-Z]{2,3}-?\d{3})')
 
 
 # These are parameters that will be fetched from the page.

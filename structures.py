@@ -4,9 +4,18 @@ class Course:
         self.name = name
         self.hashcode = hashcode
         self.code = code
+       
+    @classmethod
+    def from_db(cls, row):
+        name = row[0]
+        hashcode = row[1]
+        return cls(name, hashcode, "")
 
     def add_subject(self, subject_code):
         self.subjects.add(subject_code)
+        
+    def response_json(self):
+        return {"name": self.name, "code": self.hashcode, "subjects": list(self.subjects)}
         
 class DataRow:
     def __init__(self):
