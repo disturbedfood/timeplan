@@ -15,7 +15,7 @@ import timeplan
 
 courses = timeplan.retrieve_course_codes("h")
 # for v in courses: print v.subjects
-# dbtools.save_course_codes(courses)
+dbtools.save_course_codes(courses)
 print "Added courses to database."
 
 justafew = []

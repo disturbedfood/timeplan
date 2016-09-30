@@ -29,7 +29,7 @@ def add_to_db(timetable, code):
 def save_course_codes(courses):
     db_data = []
     current_time = int(mktime(dt.datetime.utcnow().timetuple()))
-    for course in c:
+    for course in courses:
         db_data.append((course.hashcode, course.code, course.name, current_time))
     try:
         db_con = sql.connect("timetable.db")

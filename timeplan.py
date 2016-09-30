@@ -30,7 +30,7 @@ def parse_type(type_check):
     type_check = re.split("[\/\s]", type_check.lower())
     type = ""
     del_indeces = []
-    for i in range(0, len(type_check) - 1):
+    for i in range(len(type_check)):
         if "for" in type_check[i]:
             if len(type) > 0: type += "/"
             type += "Lecture"
@@ -45,7 +45,6 @@ def parse_type(type_check):
             if len(type) > 0: type += "/"
             type += "Practice"
             del_indeces.append(type_check[i])
-        
     type_check = [t for t in type_check if t not in del_indeces]
 
     if len(type) == 0: return ("See info", " ".join(type_check))
@@ -197,6 +196,7 @@ def convert_to_table_format(html, course, csv=False):
 # Handles raw HTML from each individual row, converting into a tuple for database insertion/return
 def get_row_info(row, course, week_no, csv=False):
     data_row = DataRow()
+    data_row.week = week_no
 
     for i in range(len(row)):
         if len(row[i].getText()) > 0:
