@@ -38,7 +38,7 @@ $(function() {
 	if (course === undefined) {
 		$("#timeplan").text("Invalid course.");
 		return;
-	} else {requestUrl = "https://crypticcraft.eu/timeplan/2.0/course/" + course + ""}
+	} else {requestUrl = "https://crypticcraft.eu/timeplan/2.0/course/" + course}
 
 
 	if ($.QueryString.week != undefined) {
@@ -63,7 +63,7 @@ function subjectToUrl(s, week) {
 	if (s.length == 6) requestUrl += "subject/" + s;
 	else { requestUrl += "course/" + s; }
 
-	if (week != 0) requestUrl += week + "";
+	if (week != 0) requestUrl += "/" + week;
 	return requestUrl;
 }
 
@@ -90,6 +90,7 @@ function generateHtml(excluded, data) {
 	actualData = [];
 
 	for (d of data) {
+		console.log(d)
 		for (r of d.responseJSON.timeplan) {
 			actualData.push(r);
 		}

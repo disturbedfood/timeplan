@@ -1,5 +1,5 @@
-// var baseUrl = "https://crypticcraft.eu/timeplan/2.0/"
-var baseUrl = "http://localhost:5000/timeplan/2.0/"
+var baseUrl = "https://crypticcraft.eu/timeplan/2.0/"
+// var baseUrl = "http://localhost:5000/timeplan/2.0/"
 
 $(function(){
 	var courses = [];
