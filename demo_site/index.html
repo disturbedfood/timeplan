@@ -28,7 +28,7 @@
   <link rel="icon" type="image/png" href="images/favicon.png">
 
   
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
   <script type="text/javascript" src="js/timeplan.js"></script>
   </head>
@@ -43,31 +43,39 @@
 		<label style="margin-top:40px;">Selected course:</label>
     <div id="selected-course"></div>
 		<div class="row">
-      <div id="main-content">
-  			<div class="six columns">
+      <div id="main-content" class="eight columns">
+  			<div class="nine columns">
   				<input class="u-full-width" placeholder="Enter course name" id="course-selection" type="text">
   			</div>
-  			<div class="two columns">
+  			<div class="three columns">
   				<input class="button-primary" id="getcourse" value="Select" type="submit">
   			</div>
+
+        <label>Select additional subjects:</label>
+        <div class="nine columns" style="margin-left:0">
+          <input class="u-full-width" placeholder="Enter subject code" id="subject-selection" type="text">
+        </div>
+        <div class="three columns">
+          <input class="button-primary" id="getsubject" value="Select" type="submit">
+        </div>
+
       </div>
+
 
       <div id="subject-list" class="four columns">
         <h5>Subjects</h5>
 
-        <label>From course</label>
+        <label>From course (click to exclude)</label>
         <ul id="subjects-from-course">
-          <!-- just do a link, no button? -->
-          <li class="excluded">DAT234<input class="button" id="getcourse" value="Exclude" type="submit"></li>
         </ul>
 
         <hr />
 
-        <label>Additional</label>
+        <label>Additional (click to remove)</label>
         <ul id="subjects-additional">
-          <li>test</li>
         </ul>
       </div>
+
 		</div>
 
 

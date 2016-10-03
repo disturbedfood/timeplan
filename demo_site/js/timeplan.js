@@ -1,108 +1,118 @@
+// var baseUrl = "https://crypticcraft.eu/timeplan/2.0/"
+var baseUrl = "http://localhost:5000/timeplan/2.0/"
+
 $(function(){
-  var courses = [];
-  var subjects = [];
-  var selectedSubjects = [];
-  var excludedSubjects = [];
+	var courses = [];
+	var subjects = [];
 
-  var selectedCourse = "";
-  var selectedSubject = "";
-  var excludedSubject = "";
+	var selectedCourse = "";
+	var selectedSubject = "";
 
-  $.getJSON("https://crypticcraft.eu/timeplan/2.0/courses/", function (data) {
-	  for (c of data['courses']) {
-		  courses.push({value: c['name'], data: c['code']});
-	  }
-  });
 
-  $.getJSON("https://crypticcraft.eu/timeplan/2.0/subjects/", function (data) {
-	  for (c of data['subjects']) {
-		  subjects.push({value: c['subject_code'], data: c['code']});
-	  }
-  });
+  	$.getJSON(baseUrl + "courses", function (data) {
+		for (c of data['courses']) {
+		courses.push({value: c['name'], data: c['code']});
+	  	}
+  	});
+
+  	$.getJSON(baseUrl + "subjects", function (data) {
+		for (c of data['subjects']) {
+		subjects.push({value: c['subject_code'], data: c['code']});
+	  	}
+  	});
   
-   $('#course-selection').autocomplete({
+   	$('#course-selection').autocomplete({
 	    lookup: courses,
 	    onSelect: function (suggestion) {
 			selectedCourse = suggestion;
-    }
-  });
-
-  $('#course-selection').keypress(function(event) {
-	  if (event.which == 13 && selectedCourse.length == undefined) {
-		$("#selected-course").text("Selected course: " + selectedCourse.value);
-		$('#course-selection').val('');
-	  }
-  });
-
+    	}
+  	});
 
    $('#subject-selection').autocomplete({
 	    lookup: subjects,
 	    onSelect: function (suggestion) {
 			selectedSubject = suggestion.value;
-    }
+    	}
+ 	});
+
+  	$('#course-selection').keypress(function(event) {
+	  	selectCourse(event, selectedCourse);
  	});
 
    $('#subject-selection').keypress(function(event) {
-	  if (event.which == 13 && selectedSubject.length > 0) {
-	  	if (selectedSubjects.indexOf(selectedSubject) == -1 && selectedSubjects.length < 5) {
-	  		selectedSubjects.push(selectedSubject);
-	  		updateSubjects(selectedSubjects);
-	  		$('#subject-selection').val('');
-	  	}
-	  }
+	  	selectSubject(event, selectedSubject);
   	});
 
-   $('#excluded-subject-selection').autocomplete({
-	    lookup: subjects,
-	    onSelect: function (suggestion) {
-			excludedSubject = suggestion.value;
-    }
- 	});
+   $("#subjects-from-course").on('click', 'li', function() {
+   		$(this).toggleClass("excluded");
+   });
 
-   $('#excluded-subject-selection').keypress(function(event) {   
-	  if (event.which == 13 && excludedSubject.length > 0) {
-	  	if (excludedSubjects.indexOf(excludedSubject) == -1) {
-	  		excludedSubjects.push(excludedSubject);
-	  		updateExcludedSubjects(excludedSubjects);
-	  		$('#excluded-subject-selection').val('');
-	  	}
-	  }
-  	});
+   $("#subjects-additional").on('click', 'li', function() {
+   		$(this).remove();
+   });
   
 
-  $('#getcourse').click(function () {
-	  if (selectedCode.length == 0) {
-		  noCode();
-		  return;
-	  }
-	  window.location.href = "course.html?course=" + selectedCode;  
-  });
+  	$('#getcourse').click(function () {
+		selectCourse({which: 13}, selectedCourse); 
+  	});
 
-  $('#go').click(function () {
-	  window.location.href = buildUrl(selectedCourse.data, selectedSubjects, excludedSubjects);
-  });
+  	$('#getsubject').click(function () {
+		selectSubject({which: 13}, selectedSubject); 
+  	});
+
+	$('#go').click(function () {
+		window.location.href = buildUrl(selectedCourse.data, getAdditional(), getExcluded());
+	});
 });
+
+
+function selectCourse(event, selectedCourse) {
+	if (event.which == 13 && selectedCourse.length == undefined) {
+		$("#selected-course").text("Selected course: " + selectedCourse.value);
+		$('#course-selection').val('');
+
+		$.getJSON(baseUrl + "course/" + selectedCourse.data, function (data) {
+	  		subjectList = data['meta']['subjects'];
+			subs = "";
+			subsSorted = subjectList.sort();
+			for (s of subsSorted) {
+				subs += "<li>" + s + "</li>";
+			}
+			$('#subjects-from-course').html(subs);
+  		});
+  	}
+}
+
+function selectSubject(event, selectedSubject) {
+	if (event.which == 13 && selectedSubject.length > 0) {
+  		if (getAdditional().indexOf(selectedSubject) == -1) {
+  			$('#subject-selection').val('');
+  			var oldHtml = $("#subjects-additional").html();
+  			$("#subjects-additional").html(oldHtml + "<li>" + selectedSubject + "</li>");
+  		}
+  	}
+}
 
 function noCode() {
 	$('#out').text("No code selected!");
 }
 
-function updateSubjects(subjects) {
-	$("#selected-subjects").html();
-	newHtml = "";
-	for (s of subjects) {
-		newHtml += "<li>" + s + "</li>\n";
-	}
-	$("#selected-subjects").html(newHtml);
+function getAdditional() {
+	var additional = [];
+	$("#subjects-additional li").each(function() {
+		additional.push($(this).text());
+	});
+	return additional;
 }
 
-function updateExcludedSubjects(subjects) {
-	$("#excluded-subjects").html();
-	newHtml = "";
-	for (s of subjects) {
-		newHtml += "<li>" + s + "</li>\n";
-	}
-	$("#excluded-subjects").html(newHtml);
+function getExcluded() {
+	var excluded = [];
+	$("#subjects-from-course li").each(function() {
+		if ($(this).hasClass("excluded")) {
+			excluded.push($(this).text());
+		}
+	});
+	return excluded;
 }
 
 function buildUrl(course, subjects, excludedSubjects) {

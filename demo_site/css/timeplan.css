@@ -1,20 +1,20 @@
+
+
 #selected-course {
 	height: 30px;
+}
+
+#subjects-additional li {
+	list-style: none;
 }
 
 #subjects-from-course li {
 	list-style: none;
 }
 
-#subjects-from-course li input {
-	margin-left: 20px;
-	padding:5px;
-	height:30px;
-	vertical-align: middle;
-}
-
 #subjects-from-course .excluded {
 	color: gray;
+	text-decoration: line-through;
 }
 
 

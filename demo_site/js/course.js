@@ -35,14 +35,10 @@ $(function() {
 	if ($.QueryString.subjects != undefined) subjects = $.QueryString.subjects.split(",");
 	if ($.QueryString.course != undefined) course = $.QueryString.course;
 
-
-	console.log(excluded);
-	console.log(subjects);
-
 	if (course === undefined) {
 		$("#timeplan").text("Invalid course.");
 		return;
-	} else {requestUrl = "https://crypticcraft.eu/timeplan/2.0/course/" + course + "/"}
+	} else {requestUrl = "https://crypticcraft.eu/timeplan/2.0/course/" + course + ""}
 
 
 	if ($.QueryString.week != undefined) {
@@ -64,8 +60,8 @@ $(function() {
 function subjectToUrl(s, week) {
 	var requestUrl = "https://crypticcraft.eu/timeplan/2.0/";
 
-	if (s.length == 6) requestUrl += "subject/" + s + "/";
-	else { requestUrl += "course/" + s + "/"; }
+	if (s.length == 6) requestUrl += "subject/" + s;
+	else { requestUrl += "course/" + s; }
 
 	if (week != 0) requestUrl += week + "";
 	return requestUrl;
@@ -90,7 +86,7 @@ function getTimetableData(subjects, excluded, week) {
 }
 
 function generateHtml(excluded, data) {
-	console.log(data[0].responseJSON.timeplan);
+	// console.log(data[0].responseJSON.timeplan);
 	actualData = [];
 
 	for (d of data) {

@@ -55,10 +55,10 @@ def courses(search=None):
         rows = []
         for row in data:
             course = Course.from_db(row)
-            subjects = fetch_from_db("SELECT SubjectCode FROM Subjects WHERE HashCode LIKE '%%%s%%'" % course.hashcode)
-            if not "error" in subjects and len(subjects) != 0:
-                print subjects
-                for s in subjects: course.add_subject(s[0])
+            #subjects = fetch_from_db("SELECT SubjectCode FROM Subjects WHERE HashCode LIKE '%%%s%%'" % course.hashcode)
+            #if not "error" in subjects and len(subjects) != 0:
+                #course.subjects = subjects
+                # for s in subjects: course.add_subject(s[0])
             rows.append(course.response_json())
         return jsonify({'courses': rows})
 
@@ -92,7 +92,6 @@ def subject(subject, week=None):
     data = fetch_from_db(timetable_query_with_sub(course_code, week, subject))
     course_data = fetch_from_db("SELECT Name, LastUpdated FROM Courses WHERE HashCode = '%s';" % course_code)
     if len(course_data) == 0: return jsonify(json_error("Could not find course"))
-    print course_data
     meta = {"week": week,
         "subject_code": subject,
         "course_code": course_code,
@@ -121,10 +120,17 @@ def course(course, week=None):
     course_data = fetch_from_db("SELECT Name, LastUpdated FROM Courses WHERE HashCode = '%s';" % course)    
     if len(course_data) == 0: return jsonify(json_error("Could not find course"))
 
+    subjects = fetch_from_db("SELECT SubjectCode FROM Subjects WHERE HashCode LIKE '%%%s%%'" % course)
+
+    if "error" in subjects:
+        subjects = []
+
+
     meta = {"week": week,
         "course_code": course,
         "course_name": course_data[0][0],
-        "last_updated": course_data[0][1] }
+        "last_updated": course_data[0][1],
+        "subjects": [s[0] for s in subjects] }
 
 
     if "error" in data: return jsonify(data)
