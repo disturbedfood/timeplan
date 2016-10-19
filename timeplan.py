@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import requests
+from requests import Session as request
 from bs4 import BeautifulSoup
 from time import sleep
 import datetime as dt
-from urllib2 import urlopen
-from collections import OrderedDict
 import re
 from dateutil import parser
 import hashlib
@@ -14,6 +12,7 @@ from structures import DataRow, Course
 
 ROOMS_RE = re.compile('(.\d \d{3})')
 SUB_CODE_RE = re.compile('([A-Z]{2,3}-?\d{3})')
+# SUB_CODE_RE = re.compile('([A-Z]{2}-|[A-Z]{3})\d{3}')
 
 
 # These are parameters that will be fetched from the page.
@@ -98,7 +97,7 @@ def get_all(courses, days, weeks, season):
     url = get_query_url(season)
     data = {}
     
-    s = requests.Session()
+    s = request()
     
     print "Setting parameters.."
     # Subject code gets set in the loop so empty string is fine here
@@ -131,7 +130,7 @@ def retrieve_course_codes(season):
     # Check if the HTML contains the pWeeks tag (not used, but sometimes we won't get all course data and that happens when not all the HTML is in)
     contains_weeks = None
     
-    with requests.Session() as s:
+    with request() as s:
         while not raw_data and contains_weeks == None:
             req = s.get(get_query_url(season))
             html = BeautifulSoup(req.text, 'lxml')
